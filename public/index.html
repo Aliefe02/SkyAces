@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sky Aces Online</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <script type="importmap">{ "imports": { "three": "/lib/three.module.js", "three/addons/": "/lib/addons/" } }</script>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <canvas id="hud"></canvas>
+  <div id="damage"></div>
+
+  <!-- Main menu -->
+  <div id="menu" class="overlay">
+    <div class="panel">
+      <h1>SKY ACES <span>ONLINE</span></h1>
+      <p class="tag">Multiplayer jet dogfighting — pick a fighter and take the sky.</p>
+      <label class="field">Callsign
+        <input id="name" maxlength="16" placeholder="Maverick" autocomplete="off" />
+      </label>
+      <div class="label">Select aircraft</div>
+      <div id="jets" class="jets"></div>
+      <button id="play" class="primary" disabled>Connecting…</button>
+      <div id="status" class="status"></div>
+      <details class="settings">
+        <summary>Settings</summary>
+        <label><input type="checkbox" id="optRecenter" checked /> Mouse look returns behind the jet</label>
+        <label><input type="checkbox" id="optInvertLook" /> Invert mouse look</label>
+        <label><input type="checkbox" id="optInvert" /> Invert pitch (↑ = nose up)</label>
+        <label>Mouse look sensitivity <input type="range" id="optSens" min="0.3" max="2.5" step="0.1" value="1" /></label>
+        <label><input type="checkbox" id="optMute" /> Mute sound</label>
+      </details>
+    </div>
+    <div class="panel controls">
+      <h3>Controls</h3>
+      <table>
+        <tr><td>W / S</td><td>Throttle 0–100% (90–100% = afterburner)</td></tr>
+        <tr><td>A / D</td><td>Turn left / right (rudder)</td></tr>
+        <tr><td>← / →</td><td>Bank (roll)</td></tr>
+        <tr><td>↑ / ↓</td><td>Nose down / nose up</td></tr>
+        <tr><td>Mouse</td><td>Look around (click the game first; middle click recenters)</td></tr>
+        <tr><td>Hold S + turn</td><td>Cobra: post-stall braking</td></tr>
+        <tr><td>F</td><td>Drop flares (cooldown depends on jet)</td></tr>
+        <tr><td>M</td><td>Big map (mouse: wheel zoom, drag move; M / Esc closes)</td></tr>
+        <tr><td>N</td><td>Mute sound</td></tr>
+        <tr><td>Left click / Space</td><td>Fire selected weapon</td></tr>
+        <tr><td>1 2 3 / Wheel / Right click</td><td>Minigun · Lock missile · Rocket</td></tr>
+        <tr><td>C</td><td>Chase / cockpit camera</td></tr>
+        <tr><td>V (hold)</td><td>Look behind</td></tr>
+        <tr><td>Tab (hold)</td><td>Scoreboard</td></tr>
+        <tr><td>Esc</td><td>Menu (change aircraft, settings, main menu)</td></tr>
+      </table>
+      <p class="hint">Lock missile: keep an enemy inside the dashed circle in front of your nose and within your jet's lock range (on its card; stealth jets must be closer) — the box turns red and you hear a steady tone. Each jet has its own reloads. When the MISSILE warning flashes, press F: flares pull most incoming lock-on missiles away. Cobra: while fast, hold S and pull (↓) or turn (A/D) — the nose rears up or swings sideways and the jet brakes hard. Let go to drop the nose and recover. Don't fly into the city's skyscrapers.</p>
+    </div>
+  </div>
+
+  <!-- Death screen -->
+  <div id="death" class="overlay hidden">
+    <div class="panel center">
+      <h2 id="deathTitle">SHOT DOWN</h2>
+      <p id="deathBy"></p>
+      <div id="deathJets" class="jets small"></div>
+      <button id="respawn" class="primary" disabled>Respawn</button>
+      <button id="deathMain" class="secondary">Main menu</button>
+      <p class="hint">Press Enter to respawn</p>
+    </div>
+  </div>
+
+  <!-- Esc menu (the match keeps running: your jet flies straight and level meanwhile) -->
+  <div id="pause" class="overlay hidden">
+    <div class="panel center pause">
+      <h2 class="paused">MENU</h2>
+      <p class="hint">The match keeps running — your jet flies straight and level while this is open.</p>
+      <div class="menu-buttons">
+        <button id="pResume" class="primary">Resume</button>
+        <button id="pChange" class="secondary">Change aircraft</button>
+        <button id="pSettings" class="secondary">Settings &amp; controls</button>
+        <button id="pMain" class="secondary danger">Main menu</button>
+      </div>
+      <div id="pChangePanel" class="sub hidden">
+        <div class="label">Pick a jet — you'll respawn in it right away</div>
+        <div id="pauseJets" class="jets small"></div>
+        <button id="pSwitch" class="primary">Switch now</button>
+        <p class="hint">Switching while under fire (hit in the last 8 s) counts as a death for you and a kill for your attacker.</p>
+      </div>
+      <div id="pSettingsPanel" class="sub hidden">
+        <label class="opt"><input type="checkbox" id="pMute" /> Mute sound</label>
+        <label class="opt"><input type="checkbox" id="pInvert" /> Invert pitch (↑ = nose up)</label>
+        <label class="opt"><input type="checkbox" id="pInvertLook" /> Invert mouse look</label>
+        <label class="opt">Mouse look sensitivity <input type="range" id="pSens" min="0.3" max="2.5" step="0.1" /></label>
+        <p class="hint">W/S throttle · A/D turn · arrows bank &amp; pitch · S + turn = cobra · Space/click fire · 1-3 weapons · F flares · M map · C camera · V look back · Tab scores · N mute</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="scoreboard" class="hidden"></div>
+  <div id="killfeed"></div>
+  <div id="center-msg"></div>
+  <div id="resume" class="hidden">Click the game to look around with the mouse</div>
+  <div id="netinfo"></div>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

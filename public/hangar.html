@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hangar Viewer</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #9fb6cc; font-family: system-ui, sans-serif; }
+    #ui { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.55); color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 14px; }
+    #ui button { margin: 2px; }
+  </style>
+  <script type="importmap">{ "imports": { "three": "/lib/three.module.js", "three/addons/": "/lib/addons/" } }</script>
+</head>
+<body>
+  <div id="ui">Hangar — preview every jet in shared/jets.js. Drag to orbit, wheel to zoom.<br /><span id="btns"></span></div>
+  <script type="module">
+    import * as THREE from 'three';
+    import { JETS, JET_IDS } from '/shared/jets.js';
+    import { buildJet, updateJetVisual } from '/js/jetModel.js';
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    document.body.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x9fb6cc);
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const env = new THREE.Scene();
+    env.add(new THREE.Mesh(new THREE.SphereGeometry(50, 16, 8), new THREE.MeshBasicMaterial({ color: 0xb8cde0, side: THREE.BackSide })));
+    scene.environment = pmrem.fromScene(env).texture;
+    scene.environmentIntensity = 0.7;
+    const sun = new THREE.DirectionalLight(0xffffff, 2.4); sun.position.set(30, 50, -20); scene.add(sun);
+    scene.add(new THREE.HemisphereLight(0xbcd6ff, 0x55643f, 0.9));
+    const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 1000);
+
+    const jets = [];
+    JET_IDS.forEach((id, i) => {
+      const j = buildJet(JETS[id]);
+      const cols = 4, rows = Math.ceil(JET_IDS.length / cols);
+      j.group.position.x = ((i % cols) - (cols - 1) / 2) * 26;
+      j.group.position.z = (Math.floor(i / cols) - (rows - 1) / 2) * 30;
+      scene.add(j.group);
+      jets.push(j);
+    });
+    let focus = null, yaw = 0.8, pitch = 0.6, dist = 110, ab = false;
+    const btns = document.getElementById('btns');
+    const add = (label, fn) => { const b = document.createElement('button'); b.textContent = label; b.onclick = fn; btns.appendChild(b); };
+    add('All', () => { focus = null; dist = 110; });
+    JET_IDS.forEach((id, i) => add(JETS[id].short, () => { focus = i; dist = 30; }));
+    add('Afterburner', () => (ab = !ab));
+    let wiggle = false;
+    add('Move controls', () => (wiggle = !wiggle));
+    let drag = false;
+    addEventListener('mousedown', (e) => { if (e.target.tagName !== 'BUTTON') drag = true; });
+    addEventListener('mouseup', () => (drag = false));
+    addEventListener('mousemove', (e) => { if (drag) { yaw -= e.movementX * 0.006; pitch = Math.max(-1.4, Math.min(1.4, pitch + e.movementY * 0.006)); } });
+    addEventListener('wheel', (e) => (dist = Math.max(8, Math.min(200, dist * (1 + Math.sign(e.deltaY) * 0.1)))));
+    addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+    window.view = (f, y, p, d) => { focus = f; yaw = y; pitch = p; dist = d; ortho = null; };
+    // blueprint views: orthographic top / side / front of one jet (other jets hidden)
+    let ortho = null;
+    const ocam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 500);
+    window.blueprint = (f, mode) => {
+      ortho = { f, mode };
+      jets.forEach((j, i) => (j.group.visible = i === f));
+    };
+    window.normal = () => { ortho = null; jets.forEach((j) => (j.group.visible = true)); };
+    window.setCtl = (w) => (wiggle = w);
+    const t0 = performance.now();
+    (function loop() {
+      requestAnimationFrame(loop);
+      const t = (performance.now() - t0) / 1000;
+      const c = focus == null ? new THREE.Vector3() : jets[focus].group.position;
+      if (ortho) {
+        const g = jets[ortho.f].group.position;
+        const span = 14, asp = innerWidth / innerHeight;
+        ocam.left = -span * asp; ocam.right = span * asp; ocam.top = span; ocam.bottom = -span; ocam.updateProjectionMatrix();
+        if (ortho.mode === 'top') { ocam.position.set(g.x, g.y + 100, g.z); ocam.up.set(0, 0, -1); }
+        if (ortho.mode === 'side') { ocam.position.set(g.x - 100, g.y, g.z); ocam.up.set(0, 1, 0); }
+        if (ortho.mode === 'front') { ocam.position.set(g.x, g.y, g.z - 100); ocam.up.set(0, 1, 0); }
+        ocam.lookAt(g);
+        jets.forEach((j) => updateJetVisual(j, 0.6, false, 0, [0, 0, 0]));
+        renderer.render(scene, ocam);
+        return;
+      }
+      camera.position.set(c.x + Math.sin(yaw) * Math.cos(pitch) * dist, c.y + Math.sin(pitch) * dist, c.z + Math.cos(yaw) * Math.cos(pitch) * dist);
+      camera.lookAt(c);
+      const ctl = wiggle ? [Math.sin(t * 2), Math.sin(t * 1.3), Math.sin(t * 0.9)] : [0, 0, 0];
+      jets.forEach((j) => updateJetVisual(j, ab ? 1 : 0.6, ab, t, ctl));
+      renderer.render(scene, camera);
+    })();
+  </script>
+</body>
+</html>

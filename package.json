@@ -1,0 +1,14 @@
+{
+  "name": "sky-aces-online",
+  "version": "1.0.0",
+  "description": "Multiplayer browser jet dogfighting game",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "three": "0.170.0",
+    "ws": "8.18.0"
+  }
+}
