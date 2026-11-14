@@ -96,7 +96,8 @@ function statBars(j) {
     bar('Turn radius', `${m.turnRadius} m`, (360 - m.turnRadius) / 170),
     bar('Roll rate', `${m.rollRate}°/s`, (m.rollRate - 140) / 120),
     bar('Armor', `${j.flight.hp}`, (j.flight.hp - 80) / 60),
-    bar('Lock range', `${(w.lock.lockRange / 1000).toFixed(1)} km`, (w.lock.lockRange - 1400) / 3200),
+    bar('Lock range', `${(w.lock.lockRange / 1000).toFixed(1)} km`, (w.lock.lockRange - 1400) / 3600),
+    bar('Missile dmg', `${w.lock.damage} ×${w.lock.mag}`, (w.lock.damage - 30) / 85),
     bar('Stealth', `${w.stealth} (−${w.stealth * CONFIG.STEALTH_PER_POINT} m)`, w.stealth / 100),
   ].join('') + `<div class="kit">${w.gun.name} · ${w.lock.name}<br>Flares ×${w.flares.count} every ${w.flares.cooldown}s <br>Missiles ×${w.lock.mag} per salvo, reload ${w.lock.reload}s · rockets ×${w.dumb.mag}</div><div class="real">Real: ${j.real || ''}</div>`;
 }
@@ -874,7 +875,18 @@ function frame() {
     warning: missileWarning, t: elapsed,
   });
 
-  $('netinfo').textContent = ws?.readyState === 1 ? `ping ${Math.round(rtt)} ms` : 'offline';
+  // FPS meter: frames counted over half-second windows, plus the slowest frame in that window
+  const nowMs = performance.now();
+  fpsStat.frames++;
+  fpsStat.worst = Math.max(fpsStat.worst, nowMs - fpsStat.last);
+  fpsStat.last = nowMs;
+  if (nowMs - fpsStat.start >= 500) {
+    const fps = (fpsStat.frames * 1000) / (nowMs - fpsStat.start);
+    const col = fps >= 50 ? '#86ff9e' : fps >= 30 ? '#ffd84b' : '#ff5b5b';
+    const net = ws?.readyState === 1 ? `ping ${Math.round(rtt)} ms` : 'offline';
+    $('netinfo').innerHTML = `<b style="color:${col}">${Math.round(fps)} FPS</b> · slowest frame ${Math.round(fpsStat.worst)} ms · ${net}`;
+    fpsStat.frames = 0; fpsStat.worst = 0; fpsStat.start = nowMs;
+  }
   const near = camMode === 'cockpit' && phase === 'flying' && me.alive ? 0.04 : 0.3;
   if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
   renderer.render(scene, camera);
@@ -913,6 +925,7 @@ function cockpitData(ctrl) {
 let dmgSmokeAcc = 0;
 let lastCtrl = {};
 let frameDt = 1 / 60;
+const fpsStat = { frames: 0, worst: 0, start: performance.now(), last: performance.now() };
 
 function toggleMap() {
   const open = tmap.toggle(me.model ? me.model.group.position : null, hud.w, hud.h);

@@ -16,7 +16,7 @@ export const JETS = {
     id: 'f16',
     name: 'F-16 Fighting Falcon',
     short: 'F-16',
-    role: 'Agile all-rounder. Very fast roll, fast-firing 20 mm gun, short 2.4 km lock range.',
+    role: 'Agile all-rounder. Very fast roll, fast-firing 20 mm gun, 2 light missiles per salvo, 2.8 km lock.',
     flight: {
       hp: 100, maxG: 10.5, pitchRate: 1.17, rollRate: 4.4, yawRate: 0.55, lift: 0.0114,
       aoaMax: 0.44, aoaStall: 0.48, drag: 0.000168, induced: 0.00588, thrust: 13.9, abThrust: 9.2,
@@ -26,7 +26,7 @@ export const JETS = {
     real: 'Mach 2.05 · T/W 1.10 · wing load 431 kg/m² · roll ~320°/s · APG-68 radar',
     weapons: {
       gun: { name: 'M61A1 Vulcan 20 mm', fireRate: 40, damage: 1.7, muzzleVelocity: 1050, lifetime: 1.3, heatPerShot: 1 / 150 },
-      lock: { name: 'AIM-120C AMRAAM', range: 2400, cone: 35, reload: 2.5, maxSpeed: 650, turnG: 30, burnTime: 4.5, lifetime: 11, damage: 75 },
+      lock: { name: 'AIM-120C AMRAAM', range: 2800, cone: 35, mag: 2, reload: 3.6, maxSpeed: 650, turnG: 30, burnTime: 4.5, lifetime: 12, damage: 50 },
       dumb: { name: 'Rockets', reload: 2.5, damage: 100 },
       flares: { cooldown: 5, count: 6, decoyChance: 0.8 },
       stealth: 20, // 0–100: enemy lock range against this jet drops by stealth × 5 m
@@ -71,7 +71,7 @@ export const JETS = {
     id: 'f22',
     name: 'F-22 Raptor',
     short: 'F-22',
-    role: 'Air dominance. Stealth 90, long 4.0 km lock, fastest without afterburner, few flares.',
+    role: 'Air dominance. Stealth 90, 3.8 km lock, 2 medium missiles per salvo, fastest without afterburner.',
     flight: {
       hp: 110, maxG: 11, pitchRate: 1.26, rollRate: 3.7, yawRate: 0.6, lift: 0.0121, aoaMax: 1,
       aoaStall: 0.5, drag: 0.000179, induced: 0.00618, thrust: 17.8, abThrust: 8.7, tvc: 0.75,
@@ -81,7 +81,7 @@ export const JETS = {
     real: 'Mach 2.25 · supercruise 1.8 · T/W 1.26 · 2D thrust vectoring · APG-77 radar · stealth',
     weapons: {
       gun: { name: 'M61A2 Vulcan 20 mm', fireRate: 40, damage: 1.7, muzzleVelocity: 1050, lifetime: 1.3, heatPerShot: 1 / 135 },
-      lock: { name: 'AIM-120D AMRAAM', range: 4000, cone: 30, mag: 2, reload: 4.6, maxSpeed: 680, turnG: 30, burnTime: 5, lifetime: 16, damage: 75 },
+      lock: { name: 'AIM-120D AMRAAM', range: 3800, cone: 30, mag: 2, reload: 4.6, maxSpeed: 680, turnG: 30, burnTime: 5, lifetime: 15, damage: 70 },
       dumb: { name: 'Rockets', reload: 3.0, damage: 100 },
       flares: { cooldown: 6, count: 4, decoyChance: 0.9 },
       stealth: 90, // 0–100: enemy lock range against this jet drops by stealth × 5 m
@@ -124,7 +124,7 @@ export const JETS = {
     id: 'su57',
     name: 'Su-57 Felon',
     short: 'Su-57',
-    role: 'Supermaneuverable. Longest lock (4.6 km) with a wide cone, stealth 65, hard-hitting 30 mm gun.',
+    role: 'Supermaneuverable. 2 hard-hitting missiles per salvo, 3.0 km lock with a wide cone, stealth 65, 30 mm gun.',
     flight: {
       hp: 120, maxG: 11, pitchRate: 1.35, rollRate: 3.7, yawRate: 0.8, lift: 0.0125,
       aoaMax: 1.05, aoaStall: 0.52, drag: 0.000183, induced: 0.00627, thrust: 16.3, abThrust: 8.8,
@@ -134,7 +134,7 @@ export const JETS = {
     real: 'Mach 2.0 · supercruise 1.3 · T/W 1.19 · 3D thrust vectoring · N036 radar · reduced RCS',
     weapons: {
       gun: { name: 'GSh-30-1 30 mm', fireRate: 18, damage: 4.4, muzzleVelocity: 860, lifetime: 1.4, heatPerShot: 1 / 75 },
-      lock: { name: 'R-77M', range: 4600, cone: 40, mag: 2, reload: 4.4, maxSpeed: 680, turnG: 33, burnTime: 5, lifetime: 18, damage: 80 },
+      lock: { name: 'R-77M', range: 3000, cone: 40, mag: 2, reload: 4.8, maxSpeed: 680, turnG: 33, burnTime: 5, lifetime: 13, damage: 95 },
       dumb: { name: 'Rockets', mag: 2, reload: 4.6, damage: 100 },
       flares: { cooldown: 5, count: 6, decoyChance: 0.85 },
       stealth: 65, // 0–100: enemy lock range against this jet drops by stealth × 5 m
@@ -232,7 +232,7 @@ export const JETS = {
     id: 'f35',
     name: 'F-35A Lightning II',
     short: 'F-35',
-    role: 'Stealthiest (100: enemy locks lose 500 m), 3.5 km lock, wide cone, but slowest and weak at turning.',
+    role: 'Stealthiest (enemy locks lose 500 m). Longest lock (5 km), one very heavy missile, but slow and weak at turning.',
     flight: {
       hp: 105, maxG: 9.3, pitchRate: 1, rollRate: 3, yawRate: 0.55, lift: 0.0102, aoaMax: 0.87,
       aoaStall: 0.5, drag: 0.000202, induced: 0.00608, thrust: 13.5, abThrust: 9, tvc: 0,
@@ -242,7 +242,7 @@ export const JETS = {
     real: 'Mach 1.6 · T/W 1.07 · wing load 526 kg/m² · 50° AoA · APG-81 radar · stealth',
     weapons: {
       gun: { name: 'GAU-22/A 25 mm', fireRate: 28, damage: 2.6, muzzleVelocity: 1040, lifetime: 1.4, heatPerShot: 1 / 90 },
-      lock: { name: 'AIM-120D AMRAAM', range: 3500, cone: 40, reload: 3.0, maxSpeed: 680, turnG: 30, burnTime: 5, lifetime: 14.5, damage: 75 },
+      lock: { name: 'AIM-120D AMRAAM', range: 5000, cone: 40, mag: 1, reload: 3.5, maxSpeed: 700, turnG: 30, burnTime: 6, lifetime: 18, damage: 110 },
       dumb: { name: 'Rockets', reload: 3.0, damage: 100 },
       flares: { cooldown: 6, count: 4, decoyChance: 0.9 },
       stealth: 100, // 0–100: enemy lock range against this jet drops by stealth × 5 m
